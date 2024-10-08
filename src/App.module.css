@@ -1,0 +1,16 @@
+input {
+    min-width: 80px;
+    min-height: 30px;
+    background-color: white;
+    color: black;
+    border: 3px solid #68ddf0;
+    border-radius: 3px;
+    text-align: center;
+}
+.incorrect {
+    border: 5px solid #dc0040;
+    background-color: #ef9bae;
+}
+.last {
+    color: #dc0040;
+}

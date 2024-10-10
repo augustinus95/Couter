@@ -8,7 +8,7 @@ export type StateType = {
     maxValue: number
     currentValue: number
 }
-const loadLocalStorege = (value:string) => {
+const loadLocalStorage = (value:string) => {
     try {
         const serializedState = localStorage.getItem(value);
         if (serializedState === null) {
@@ -21,9 +21,9 @@ const loadLocalStorege = (value:string) => {
 }
 
  const initialState : StateType = {
-    minValue: loadLocalStorege("minValue"),
-    maxValue: loadLocalStorege("maxValue"),
-    currentValue: loadLocalStorege("currentValue"),
+    minValue: loadLocalStorage("minValue"),
+    maxValue: loadLocalStorage("maxValue"),
+    currentValue: loadLocalStorage("currentValue"),
 }
 
 export function counterReducer(state: StateType = initialState, action: ActionType): StateType {

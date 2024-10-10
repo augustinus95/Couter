@@ -1,196 +1,90 @@
-import React, {ChangeEvent, useEffect, useState} from 'react';
+import React, {ChangeEvent, useState} from 'react';
 import s from './App.module.css'
-import styled from "styled-components";
+import {RootState, store} from "./redux/store";
+import {S} from './styles/styles'
+import {incrementAC, setMaxAC, setMinAC, setValueAC, StateType} from "./redux/counterReducer";
+import {useSelector} from "react-redux";
 
+//ts
+//rexText
+//strangeInput
 function App() {
-    const [value, setValue] = useState(0);
-    const [startValue, setStartValue] = useState(0);
-    const [maxValue, setMaxValue] = useState(1);
-    const [last, setLast] = useState(false);
-    const [incorrect, setIncorrect] = useState(false);
-    const [settingMode, setSettingMode] = useState(true);
 
-    useEffect(() => {
-        let valueAsString = localStorage.getItem('counterValue');
-        if (valueAsString) {
-            let newValue = JSON.parse(valueAsString)
-            setValue(newValue)
-        }
-        let startValueAsString = localStorage.getItem('startValue');
-        if (startValueAsString) {
-            let newValue = JSON.parse(startValueAsString)
-            setStartValue(newValue)
-        }
-        let maxValueAsString = localStorage.getItem('maxValue');
-        if (maxValueAsString) {
-            let newValue = JSON.parse(maxValueAsString)
-            setMaxValue(newValue)
-        }
-    }, []);
-    useEffect(() => {
-        if (value === maxValue) {
-            setLast(true)
-        }
-        localStorage.setItem('counterValue', JSON.stringify(value))
-    }, [value])
-    useEffect(() => {
-        localStorage.setItem('startValue', JSON.stringify(startValue))
-    }, [startValue])
-    useEffect(() => {
-        localStorage.setItem('maxValue', JSON.stringify(maxValue))
-    }, [maxValue])
+    const state = useSelector<RootState, StateType>((state ) => state.counter)
+    const currentValue = state.currentValue
+    const minValue = state.minValue
+    const maxValue = state.maxValue
+
+    const [last, setLast] = useState(false);
+    const [settingMode, setSettingMode] = useState(false);
 
     function incHandler() {
-        setValue(value + 1)
+        {
+            maxValue === currentValue ? setLast(true) : store.dispatch(incrementAC())
+        }
     }
 
-    function onReset() {
-        setValue(startValue);
+    function resetHandler() {
+        store.dispatch(setValueAC(minValue))
         setLast(false)
         setSettingMode(false)
     }
 
-    function onChangeStartValue(e: ChangeEvent<HTMLInputElement>) {
+    function onChangeMinValue(e: ChangeEvent<HTMLInputElement>) {
         setSettingMode(true)
-        const startValue = +e.currentTarget.value;
-        if (startValue >= 0  && startValue < maxValue) {
-            setIncorrect(false)
-            setStartValue(startValue)
-        } else {
-            setIncorrect(true)
-            setStartValue(startValue)
-        }
+        store.dispatch(setMinAC(+e.currentTarget.value))
     }
 
     function onChangeMaxValue(e: ChangeEvent<HTMLInputElement>) {
         setSettingMode(true)
-        const maxValue = +e.currentTarget.value
-        if (maxValue <= startValue) {
-            setIncorrect(true)
-            setMaxValue(maxValue)
-        } else {
-            setIncorrect(false)
-            setMaxValue(maxValue)
-        }
+        store.dispatch(setMaxAC(+e.currentTarget.value))
     }
 
     function onSet() {
         setSettingMode(false)
         setLast(false)
-        setValue(startValue)
-
-        localStorage.setItem('startValue', JSON.stringify(startValue))
+        store.dispatch(setValueAC(minValue))
+        localStorage.setItem('startValue', JSON.stringify(minValue))
         localStorage.setItem('maxValue', JSON.stringify(maxValue))
     }
 
     return (
-        <Container>
-            <Screen>
-                <Settings>
+        <S.Container>
+            <S.Screen>
+                <S.Settings>
                     <span>max value:</span><input type={"number"} value={maxValue} onChange={onChangeMaxValue}
-                                                  className={(incorrect ? s.incorrect : '')}/>
-                    <span>start value:</span><input type={"number"} value={startValue} onChange={onChangeStartValue}
-                                                    className={(incorrect ? s.incorrect : '')}/>
-                </Settings>
-                <Buttons>
-                    <Button onClick={onSet} disabled={incorrect}>set</Button>
-                </Buttons>
-            </Screen>
+                                                  className={(!(minValue >= 0 && minValue < maxValue) || maxValue < minValue ? s.incorrect : '')}/>
+                    <span>start value:</span><input type={"number"} value={minValue} onChange={onChangeMinValue}
+                                                    className={(!(minValue >= 0 && minValue < maxValue) || maxValue < minValue ? s.incorrect : '')}/>
+                </S.Settings>
+                <S.Buttons>
+                    <S.Button onClick={onSet} disabled={minValue > maxValue || minValue < 0}>set</S.Button>
+                </S.Buttons>
+            </S.Screen>
 
-            <Screen>
-                <Info>
-                    {incorrect ?
-                        <ValueIncorrect>Value is incorrect!</ValueIncorrect>
-                        : (settingMode ?
-                            <Instruction>Enter values and press "SET"</Instruction>
-                            : <Value className={last ? s.last : ""}>{value}</Value>)
+            <S.Screen>
+                <S.Info>
+                    {!settingMode ?
+                        <S.Value error={currentValue === maxValue ? 'true' : 'false'}>{state.currentValue}</S.Value>
+                    : ((minValue > maxValue || minValue < 0) ?
+                            <S.ValueIncorrect>Value is incorrect!</S.ValueIncorrect>
+                        :<S.Instruction>Enter values and press "SET"</S.Instruction>)
                     }
-                </Info>
-                <Buttons>
-                    <Button onClick={incHandler} disabled={last}>inc</Button>
-                    <Button onClick={onReset}>reset</Button>
-                </Buttons>
-            </Screen>
-        </Container>
+                </S.Info>
+                <S.Buttons>
+                    <S.Button onClick={incHandler} disabled={last}>inc</S.Button>
+                    <S.Button onClick={resetHandler}>reset</S.Button>
+                </S.Buttons>
+            </S.Screen>
+        </S.Container>
     )
 }
 
 export default App;
 
-const Container = styled.div`
-    height: 100vh;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    background-color: #292c34;
-    align-items: center;
-`
-const Screen = styled.div`
-    min-width: 500px;
-    min-height: 35vh;
-    border: 1px solid #68ddf0;
-    color: #68ddf0;
-    background-color: #292c34;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-    gap: 10px;
-`
-const Settings = styled.div`
-    border: 1px solid #68ddf0;
-    border-radius: 10px;
-    min-height: 99px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 5px;
-    flex-grow: 1;
-`
-const Buttons = styled.div`
-    border: 1px solid #68ddf0;
-    border-radius: 10px;
-    min-height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px
-`
-const Button = styled.button`
-    background-color: #292c34;
-    color: #68ddf0;
-    opacity: 0.5;
-    font-size: 40px;
-    border-radius: 5px;
-
-    &:hover {
-        opacity: 1;
-    }
-`
-const Info = styled.div`
-    border: 1px solid #68ddf0;;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-`
-const Instruction = styled.p`
-    color: #68ddf0;
-    font-size: 20px;
-    z-index: 1;
-`
-const Value = styled.p`
-    color: #68ddf0;
-    font-size: 40px;
-    z-index: 10;
-    font-weight: bold;
-`
-const ValueIncorrect = styled.p`
-    color: #dc0040;
-    font-size: 20px;
-    z-index: 100;
-`
-//#dc0040
+// {incorrect ?
+//     <S.ValueIncorrect>Value is incorrect!</S.ValueIncorrect>
+//     : (settingMode ?
+//         <S.Instruction>Enter values and press "SET"</S.Instruction>
+//         : <S.Value className={(last ? s.redText : '')}>{state.currentValue}</S.Value>)
+// }

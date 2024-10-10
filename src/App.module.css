@@ -11,6 +11,6 @@ input {
     border: 5px solid #dc0040;
     background-color: #ef9bae;
 }
-.last {
-    color: #dc0040;
+.redText {
+    color: #dc0040 !important;
 }
